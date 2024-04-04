@@ -57,12 +57,18 @@ public class TaskSupport {
     }
 
     private LogicalCondition createCondition(@Nullable User user, @Nullable String filter) {
+        PropertyCondition nameCondition = PropertyCondition.contains("name", filter);  // parameter value can be 'null'
+        nameCondition.setSkipNullOrEmpty(true);
+
+        JpqlCondition participantCondition = JpqlCondition.createWithParameters(
+                "(select pp from ts_ProjectParticipant pp where pp.user = :user) MEMBER OF e.project.participants",
+                null, Collections.singletonMap("user", user)
+        );
+        participantCondition.setSkipNullOrEmpty(true);
+
         return LogicalCondition.and(
-                PropertyCondition.contains("name", filter), // parameter value can be 'null'
-                JpqlCondition.createWithParameters(
-                        "(select pp from ts_ProjectParticipant pp where pp.user = :user) MEMBER OF e.project.participants",
-                        null, Collections.singletonMap("user", user)
-                )
+                nameCondition,
+                participantCondition
         );
     }
 }
